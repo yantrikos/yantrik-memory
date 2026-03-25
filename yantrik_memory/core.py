@@ -455,12 +455,28 @@ class YantrikMemory:
 
     def _load_traits(self, key: str) -> Optional[dict]:
         """Load traits from YantrikDB."""
+        if not hasattr(self, "_traits_rids"):
+            self._traits_rids = {}
+
+        # Fast path: get by cached RID
+        if key in self._traits_rids:
+            try:
+                record = self._db.get(self._traits_rids[key])
+                if record:
+                    text = record.get("text", "")
+                    if text.startswith(key + " "):
+                        text = text[len(key) + 1:]
+                    return json.loads(text)
+            except Exception:
+                del self._traits_rids[key]
+
+        # Fallback: recall-based search
         results = self._db.recall(query=key, top_k=5, domain="preference")
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("traits_key") == key:
+                self._traits_rids[key] = r["rid"]
                 text = r.get("text", "")
-                # Strip key prefix if present
                 if text.startswith(key + " "):
                     text = text[len(key) + 1:]
                 try:
@@ -511,22 +527,38 @@ class YantrikMemory:
     def get_bond(self, agent_id: str, user_id: str) -> dict:
         """Get the bond state between agent and user."""
         bond_key = f"bond:{agent_id}:{user_id}"
+
+        if not hasattr(self, "_bond_rids"):
+            self._bond_rids = {}
+
+        def _parse_bond(text):
+            if text.startswith(bond_key + " "):
+                text = text[len(bond_key) + 1:]
+            bond_data = json.loads(text)
+            bond_data = self._apply_bond_decay(bond_data)
+            level = BondLevel.from_score(bond_data.get("score", 0.0))
+            bond_data["level"] = level.label
+            bond_data["level_description"] = level.desc
+            return bond_data
+
+        # Fast path: get by cached RID
+        if bond_key in self._bond_rids:
+            try:
+                record = self._db.get(self._bond_rids[bond_key])
+                if record:
+                    return _parse_bond(record.get("text", ""))
+            except Exception:
+                del self._bond_rids[bond_key]
+
+        # Fallback: recall-based search
         results = self._db.recall(query=bond_key, top_k=5, domain="people")
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("bond_key") == bond_key:
-                text = r.get("text", "")
-                # Strip key prefix if present
-                if text.startswith(bond_key + " "):
-                    text = text[len(bond_key) + 1:]
+                self._bond_rids[bond_key] = r["rid"]
                 try:
-                    bond_data = json.loads(text)
-                    bond_data = self._apply_bond_decay(bond_data)
-                    level = BondLevel.from_score(bond_data.get("score", 0.0))
-                    bond_data["level"] = level.label
-                    bond_data["level_description"] = level.desc
-                    return bond_data
-                except json.JSONDecodeError:
+                    return _parse_bond(r.get("text", ""))
+                except (json.JSONDecodeError, KeyError):
                     pass
 
         return {
