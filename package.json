@@ -1,0 +1,26 @@
+{
+  "name": "yantrik-memory",
+  "version": "0.1.0",
+  "description": "Persistent cognitive memory for AI agents — powered by YantrikDB",
+  "author": "Yantrikos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yantrikos/yantrik-memory.git"
+  },
+  "homepage": "https://github.com/yantrikos/yantrik-memory",
+  "keywords": [
+    "memory", "ai", "cognitive", "yantrikdb", "personality",
+    "bonds", "traits", "agent", "openclaw", "plugin"
+  ],
+  "openclaw": {
+    "type": "plugin",
+    "executesCode": true,
+    "entryPoint": "hooks/yantrik-memory-startup/handler.js",
+    "runtime": "python",
+    "configSchema": "openclaw.plugin.json"
+  },
+  "engines": {
+    "openclaw": ">=2024.1.0"
+  }
+}
