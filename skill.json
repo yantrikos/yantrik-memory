@@ -1,0 +1,108 @@
+{
+  "name": "yantrik-memory",
+  "version": "0.1.0",
+  "type": "plugin",
+  "executesCode": true,
+  "description": "Persistent cognitive memory for AI agents — powered by YantrikDB's 5-index architecture with personality traits, bond evolution, and context assembly",
+  "author": "Yantrikos",
+  "homepage": "https://github.com/yantrikos/yantrik-memory",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yantrikos/yantrik-memory.git"
+  },
+  "license": "MIT",
+  "keywords": ["memory", "ai", "cognitive", "yantrikdb", "personality", "bonds", "traits", "agent"],
+  "engines": {
+    "clawdbot": ">=2024.1.0",
+    "openclaw": ">=2024.1.0"
+  },
+  "install": {
+    "pip": "pip install yantrik-memory",
+    "setup": "yantrik-memory init"
+  },
+  "hooks": [
+    {
+      "name": "yantrik-memory-startup",
+      "events": ["gateway:startup", "command:new"],
+      "description": "Load agent memory on startup, save session on /new"
+    }
+  ],
+  "environment": {
+    "required": [],
+    "optional": [
+      {
+        "name": "YANTRIK_AGENT_ID",
+        "description": "Unique identifier for this agent's memories",
+        "default": "default"
+      },
+      {
+        "name": "YANTRIKDB_DB_PATH",
+        "description": "Path to YantrikDB database file",
+        "default": "./yantrik_memory.db"
+      },
+      {
+        "name": "YANTRIK_ENCRYPTION_KEY",
+        "description": "Fernet encryption key (auto-generated if not set)"
+      }
+    ]
+  },
+  "dependencies": {
+    "python": ">=3.10",
+    "pip": {
+      "required": ["yantrikdb>=0.4.0"],
+      "optional": ["cryptography"]
+    }
+  },
+  "security": {
+    "requires_review": true,
+    "reason": "Plugin executes Python to manage YantrikDB memory database and encryption keys",
+    "permissions": [
+      "file_system_read",
+      "file_system_write",
+      "code_execution",
+      "environment_variables",
+      "startup_hooks"
+    ],
+    "key_management": {
+      "encryption_key_location": "~/.config/yantrik-memory/.key",
+      "requires_explicit_consent": true
+    },
+    "install_actions": [
+      "Installs startup hooks to ~/.openclaw/hooks or ~/.clawdbot/hooks",
+      "Generates encryption key at ~/.config/yantrik-memory/.key",
+      "Creates YantrikDB database in working directory"
+    ],
+    "network_access": {
+      "no_telemetry": true,
+      "no_external_calls": true
+    },
+    "code_execution": {
+      "what": "Runs Python to manage YantrikDB memory database",
+      "when": "On startup, /new command, and memory API calls",
+      "scope": "Local filesystem only",
+      "no_remote_code": true
+    }
+  },
+  "scanner_notes": {
+    "plugin_type": "Code plugin (executesCode: true). Runs Python locally to manage a YantrikDB memory database. No remote code, no network calls.",
+    "environment_variables": "All env vars declared in environment.optional. Optional because Yantrik Memory works with zero configuration.",
+    "install_mechanism": "pip install yantrik-memory. Source: PyPI and GitHub. No shell scripts.",
+    "sudo_requirements": "Never needs sudo. All operations in user space.",
+    "source_verification": "GitHub: https://github.com/yantrikos/yantrik-memory, PyPI: https://pypi.org/project/yantrik-memory/, License: MIT"
+  },
+  "metadata": {
+    "clawdbot": {
+      "emoji": "\ud83e\udde0"
+    },
+    "openclaw": {
+      "emoji": "\ud83e\udde0"
+    },
+    "clawhub": {
+      "emoji": "\ud83e\udde0",
+      "category": "memory",
+      "provides": {
+        "slot": "memory"
+      }
+    }
+  }
+}

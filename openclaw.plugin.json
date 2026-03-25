@@ -1,0 +1,126 @@
+{
+  "id": "yantrik-memory",
+  "name": "Yantrik Memory",
+  "version": "0.1.0",
+  "description": "Persistent cognitive memory for AI agents — powered by YantrikDB's 5-index architecture with personality traits, bond evolution, and context assembly",
+  "author": "Yantrikos",
+  "license": "MIT",
+  "homepage": "https://github.com/yantrikos/yantrik-memory",
+  "repository": "https://github.com/yantrikos/yantrik-memory",
+  "executesCode": true,
+  "pluginApiVersion": "1.0",
+  "runtime": "python",
+  "entryPoint": "yantrik_memory/bridge.py",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "agent_id": {
+        "type": "string",
+        "description": "Unique identifier for this agent's memories",
+        "default": "default"
+      },
+      "db_path": {
+        "type": "string",
+        "description": "Path to YantrikDB database file",
+        "default": "./yantrik_memory.db"
+      },
+      "encryption_enabled": {
+        "type": "boolean",
+        "description": "Enable Fernet encryption for sensitive memories",
+        "default": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "storageEngine": "yantrikdb",
+  "permissions": [
+    "file_system_read",
+    "file_system_write",
+    "code_execution",
+    "environment_variables",
+    "startup_hooks"
+  ],
+  "capabilities": {
+    "memory": {
+      "remember": "Store memories via YantrikDB — 5-index architecture (Vector, Graph, Temporal, Decay, KV)",
+      "recall": "Hybrid retrieval with semantic similarity, graph connections, temporal decay, and keyword matching",
+      "forget": "Delete memories with audit trail",
+      "correct": "Update memory content with versioning",
+      "think": "Cognitive maintenance — consolidation, conflict detection, pattern mining"
+    },
+    "personality": {
+      "traits": "9 evolving personality traits with bidirectional signals and exponential decay",
+      "bonds": "6-stage relationship evolution from stranger to bonded",
+      "soul": "Per-user trait customization with base/user blending"
+    },
+    "context": {
+      "get_full_context": "Assemble complete LLM context from memories, traits, bonds, and conversation state",
+      "process_turn": "Single entry point — extract memories, evolve traits, update bond, return context"
+    },
+    "graph": {
+      "relate": "Build knowledge graph relationships between entities",
+      "query": "Traverse entity connections for context-aware retrieval"
+    }
+  },
+  "hooks": [
+    {
+      "event": "gateway:startup",
+      "handler": "hooks/yantrik-memory-startup/handler.js",
+      "description": "Load agent memory and refresh context on startup"
+    },
+    {
+      "event": "command:new",
+      "handler": "hooks/yantrik-memory-startup/handler.js",
+      "description": "Save session context on /new command"
+    }
+  ],
+  "install": {
+    "command": "pip install yantrik-memory",
+    "setup": "yantrik-memory init"
+  },
+  "dependencies": {
+    "python": ">=3.10",
+    "required": ["yantrikdb>=0.4.0"],
+    "optional": {
+      "encryption": "cryptography>=41.0.0"
+    }
+  },
+  "security": {
+    "executesCode": true,
+    "codeExecution": {
+      "what": "Runs Python to manage YantrikDB memory database and assemble agent context",
+      "when": "On gateway:startup, command:new, and when agent calls memory APIs",
+      "scope": "Local filesystem only — reads/writes database and encryption key files"
+    },
+    "networkAccess": {
+      "noTelemetry": true,
+      "noExternalCalls": true
+    },
+    "fileAccess": {
+      "database": "Working directory (yantrik_memory.db) — YantrikDB embedded SQLite",
+      "encryptionKey": "~/.config/yantrik-memory/.key",
+      "hooks": "~/.openclaw/hooks/ or ~/.clawdbot/hooks/"
+    },
+    "sourceVerification": {
+      "github": "https://github.com/yantrikos/yantrik-memory",
+      "pypi": "https://pypi.org/project/yantrik-memory/",
+      "license": "MIT",
+      "fullyAuditable": true
+    }
+  },
+  "keywords": [
+    "memory", "ai", "cognitive", "yantrikdb", "personality",
+    "bonds", "traits", "agent", "context", "knowledge-graph"
+  ],
+  "metadata": {
+    "emoji": "\ud83e\udde0",
+    "category": "memory",
+    "provides": {
+      "slot": "memory"
+    },
+    "clawhub": {
+      "featured": true,
+      "tags": ["memory", "cognitive", "yantrikdb"]
+    }
+  }
+}
