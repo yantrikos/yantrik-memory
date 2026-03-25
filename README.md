@@ -1,6 +1,6 @@
 # Yantrik Memory
 
-Persistent cognitive memory for AI agents, powered by [YantrikDB](https://github.com/yantrikos/yantrikdb).
+Persistent cognitive memory for AI agents, powered by [YantrikDB](https://github.com/yantrikos/yantrikdb) ([docs](https://yantrikdb.com)).
 
 ## Install
 
@@ -120,7 +120,7 @@ git clone https://github.com/yantrikos/yantrik-memory.git
 pip install -e yantrik-memory
 ```
 
-## Powered by YantrikDB
+## Powered by [YantrikDB](https://github.com/yantrikos/yantrikdb)
 
 5 unified indexes on a single SQLite file:
 
