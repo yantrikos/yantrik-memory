@@ -1,35 +1,27 @@
 {
-  "displayName": "Yantrik Memory",
-  "summary": "Persistent cognitive memory for AI agents — personality traits, bond evolution, and context assembly powered by YantrikDB's 5-index architecture",
-  "runtimeId": "yantrik-memory",
-  "executesCode": true,
-  "capabilityTags": ["executes-code", "memory"],
+  "id": "yantrik-memory",
+  "name": "Yantrik Memory",
+  "version": "0.1.0",
+  "description": "Persistent cognitive memory for AI agents — personality traits, bond evolution, and context assembly powered by YantrikDB's 5-index architecture.",
   "configSchema": {
     "type": "object",
+    "additionalProperties": false,
     "properties": {
       "agentId": {
         "type": "string",
-        "description": "Unique identifier for this agent's memories",
-        "default": "default"
+        "default": "default",
+        "description": "Unique identifier for this agent's memories."
       },
       "dbPath": {
         "type": "string",
-        "description": "Path to YantrikDB database file",
-        "default": "./yantrik_memory.db"
+        "default": "./yantrik_memory.db",
+        "description": "Path to YantrikDB database file."
       },
       "encryptionEnabled": {
         "type": "boolean",
-        "description": "Enable Fernet encryption for sensitive memories",
-        "default": true
+        "default": true,
+        "description": "Enable Fernet encryption for sensitive memories."
       }
     }
-  },
-  "channels": [],
-  "bundledSkills": [],
-  "commands": [],
-  "httpRoutes": [],
-  "setupEntry": false,
-  "builtWithOpenClawVersion": ">=2024.1.0",
-  "minGatewayVersion": ">=2024.1.0",
-  "pluginApiRange": ">=1.0.0"
+  }
 }
