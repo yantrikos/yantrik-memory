@@ -455,47 +455,72 @@ class YantrikMemory:
 
     def _load_traits(self, key: str) -> Optional[dict]:
         """Load traits from YantrikDB."""
-        results = self._db.recall(query=key, top_k=1, domain="preference")
+        results = self._db.recall(query=key, top_k=5, domain="preference")
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("traits_key") == key:
+                text = r.get("text", "")
+                # Strip key prefix if present
+                if text.startswith(key + " "):
+                    text = text[len(key) + 1:]
                 try:
-                    return json.loads(r.get("text", "{}"))
+                    return json.loads(text)
                 except json.JSONDecodeError:
                     return None
         return None
 
     def _save_traits(self, key: str, traits: dict):
         """Save traits to YantrikDB."""
-        # Check if traits already exist and correct them
-        results = self._db.recall(query=key, top_k=1, domain="preference")
+        # Store RID for fast lookup on subsequent saves
+        if not hasattr(self, "_traits_rids"):
+            self._traits_rids = {}
+
+        # If we have a cached RID, correct directly
+        if key in self._traits_rids:
+            try:
+                result = self._db.correct(rid=self._traits_rids[key], new_text=json.dumps(traits))
+                if isinstance(result, dict) and "corrected_rid" in result:
+                    self._traits_rids[key] = result["corrected_rid"]
+                return
+            except Exception:
+                del self._traits_rids[key]
+
+        # Try to find existing via recall
+        results = self._db.recall(query=key, top_k=5, domain="preference")
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("traits_key") == key:
-                self._db.correct(rid=r["rid"], new_text=json.dumps(traits))
+                result = self._db.correct(rid=r["rid"], new_text=json.dumps(traits))
+                if isinstance(result, dict) and "corrected_rid" in result:
+                    self._traits_rids[key] = result["corrected_rid"]
                 return
 
-        # New traits entry
-        self._db.record(
-            text=json.dumps(traits),
+        # New traits entry — prefix text with key for better recall matching
+        rid = self._db.record(
+            text=f"{key} {json.dumps(traits)}",
             memory_type="semantic",
             importance=0.9,
             domain="preference",
             source="system",
             metadata={"traits_key": key},
         )
+        self._traits_rids[key] = str(rid)
 
     # ── Bond Evolution ─────────────────────────────────────────────────
 
     def get_bond(self, agent_id: str, user_id: str) -> dict:
         """Get the bond state between agent and user."""
         bond_key = f"bond:{agent_id}:{user_id}"
-        results = self._db.recall(query=bond_key, top_k=1, domain="people")
+        results = self._db.recall(query=bond_key, top_k=5, domain="people")
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("bond_key") == bond_key:
+                text = r.get("text", "")
+                # Strip key prefix if present
+                if text.startswith(bond_key + " "):
+                    text = text[len(bond_key) + 1:]
                 try:
-                    bond_data = json.loads(r.get("text", "{}"))
+                    bond_data = json.loads(text)
                     bond_data = self._apply_bond_decay(bond_data)
                     level = BondLevel.from_score(bond_data.get("score", 0.0))
                     bond_data["level"] = level.label
@@ -594,21 +619,40 @@ class YantrikMemory:
     def _save_bond(self, agent_id: str, user_id: str, bond_data: dict):
         """Save bond to YantrikDB."""
         bond_key = f"bond:{agent_id}:{user_id}"
-        results = self._db.recall(query=bond_key, top_k=1, domain="people")
+
+        if not hasattr(self, "_bond_rids"):
+            self._bond_rids = {}
+
+        # Fast path: correct by cached RID
+        if bond_key in self._bond_rids:
+            try:
+                result = self._db.correct(rid=self._bond_rids[bond_key], new_text=json.dumps(bond_data))
+                if isinstance(result, dict) and "corrected_rid" in result:
+                    self._bond_rids[bond_key] = result["corrected_rid"]
+                return
+            except Exception:
+                del self._bond_rids[bond_key]
+
+        # Try to find existing via recall
+        results = self._db.recall(query=bond_key, top_k=5, domain="people")
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("bond_key") == bond_key:
-                self._db.correct(rid=r["rid"], new_text=json.dumps(bond_data))
+                result = self._db.correct(rid=r["rid"], new_text=json.dumps(bond_data))
+                if isinstance(result, dict) and "corrected_rid" in result:
+                    self._bond_rids[bond_key] = result["corrected_rid"]
                 return
 
-        self._db.record(
-            text=json.dumps(bond_data),
+        # New bond entry — prefix text with key for better recall matching
+        rid = self._db.record(
+            text=f"{bond_key} {json.dumps(bond_data)}",
             memory_type="semantic",
             importance=0.8,
             domain="people",
             source="system",
             metadata={"bond_key": bond_key},
         )
+        self._bond_rids[bond_key] = str(rid)
 
     # ── Context Assembly ───────────────────────────────────────────────
 
