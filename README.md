@@ -38,6 +38,72 @@ print(context["traits"])       # {'conciseness': 0.55, 'humor': 0.5, ...}
 print(context["bond"]["level"])  # 'acquaintance'
 ```
 
+## Real Conversation Demo
+
+Here's Yantrik Memory running inside [OpenClaw](https://github.com/openclaw/openclaw) — an open-source AI agent platform. The agent remembers context across turns, learns preferences, and builds a profile over time.
+
+**Turn 1** — Alex introduces himself:
+
+> **Alex:** Hey! I'm Alex. I'm a backend engineer at a startup. We're building a task management app and I need help setting up the API.
+
+> **Agent:** Hi Alex. What stack are you using? What API help do you need?
+
+**Turn 2** — Alex shares preferences, agent adapts:
+
+> **Alex:** We're using Python with FastAPI. I prefer keeping things simple — no over-engineering. Can you suggest a basic project structure?
+
+> **Agent:**
+> ```
+> taskapp/
+> ├── app/
+> │   ├── main.py          # FastAPI app
+> │   ├── api/
+> │   │   ├── tasks.py     # /tasks endpoints
+> │   │   └── users.py     # /users endpoints
+> │   ├── core/
+> │   │   ├── config.py    # Settings
+> │   │   └── security.py  # Auth utils
+> │   ├── models/
+> │   │   ├── task.py      # Pydantic models
+> │   │   └── user.py
+> │   └── db/
+> │       └── database.py  # DB connection
+> ├── requirements.txt
+> └── README.md
+> ```
+
+**Turn 3** — Agent remembers the database preference:
+
+> **Alex:** That's perfect, thanks! Oh and remember — I always use PostgreSQL for production and SQLite for local dev. What about the database layer?
+
+> **Agent:**
+> ```python
+> from sqlalchemy import create_engine
+> from sqlalchemy.orm import sessionmaker
+> from app.core.config import settings
+>
+> # Use SQLite for dev, PostgreSQL for prod
+> engine = create_engine(settings.DATABASE_URL)
+> SessionLocal = sessionmaker(bind=engine)
+> ```
+
+**Turn 4** — Alex asks what the agent remembers:
+
+> **Alex:** Great work! You're really helpful. One more thing — what do you remember about me and my project so far?
+
+> **Agent:**
+> - Backend engineer at a startup
+> - Building a task management app
+> - Using Python with FastAPI
+> - Prefer simple solutions, no over-engineering
+> - Always use PostgreSQL for production, SQLite for local dev
+
+Behind the scenes, Yantrik Memory tracked:
+- **Traits evolved:** `helpfulness: 0.55` (from "really helpful"), `conciseness: 0.55` (from "keeping things simple")
+- **Bond level:** `acquaintance` (score: 0.08 after 4 interactions)
+- **Memories stored:** 5 facts about Alex, preferences, and project context
+- **Knowledge graph:** `Alex → works_at → Startup`, `TaskApp → uses → FastAPI`
+
 ## OpenClaw / ClawDBot Plugin
 
 Yantrik Memory is a ClawHub plugin. Install via:
