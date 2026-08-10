@@ -7,3 +7,4 @@ build/
 *.key
 .brain_key
 node_modules/
+dist/

@@ -19,5 +19,5 @@ jobs:
           python -m pip install -U pip build
           pip install -e .
           python -c "import yantrik_memory"
-          python -m build
+          rm -rf dist && python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
