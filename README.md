@@ -5,9 +5,12 @@ Persistent cognitive memory for AI agents, powered by [YantrikDB](https://github
 ## Install
 
 ```bash
-pip install yantrik-memory
+# PyPI release pending — install from source for now:
+pip install git+https://github.com/yantrikos/yantrik-memory
 yantrik-memory init
 ```
+
+> `pip install yantrik-memory` will work once the first PyPI release ships; this README will drop the source install then.
 
 ## What it does
 
