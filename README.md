@@ -160,7 +160,7 @@ be used together:
   engine as an HTTP service / cluster when several agents share one memory.
 - [yantrikdb-mcp](https://github.com/yantrikos/yantrikdb-mcp) — that memory as
   an MCP server for Claude Code, Cursor and Windsurf.
-- [langchain-yantrikdb](https://github.com/spranab/langchain-yantrikdb) — the
+- [langchain-yantrikdb](https://github.com/yantrikos/langchain-yantrikdb) — the
   same memory as a LangChain `VectorStore` and `ChatMessageHistory`.
 - [openclaw-memory-yantrikdb](https://github.com/yantrikos/openclaw-memory-yantrikdb)
   — OpenClaw memory-slot plugin backed by the same engine.
