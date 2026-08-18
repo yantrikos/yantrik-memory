@@ -1,16 +1,46 @@
 # Yantrik Memory
 
-Persistent cognitive memory for AI agents, powered by [YantrikDB](https://github.com/yantrikos/yantrikdb) ([docs](https://yantrikdb.com)).
+[![PyPI](https://img.shields.io/pypi/v/yantrik-memory)](https://pypi.org/project/yantrik-memory/)
+[![Python](https://img.shields.io/pypi/pyversions/yantrik-memory)](https://pypi.org/project/yantrik-memory/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Install
+Your agent starts every conversation as a stranger. It re-asks what stack you
+use, forgets the preference you stated last week, and treats a two-year user
+exactly like a first-time one.
+
+Yantrik Memory is a framework-agnostic Python memory layer that fixes that:
+one call per turn returns the memories, the personality traits the agent has
+learned about *this* user, how far the relationship has progressed, and the
+context an LLM needs to answer. Storage is a single SQLite file via
+[YantrikDB](https://github.com/yantrikos/yantrikdb) ([docs](https://yantrikdb.com))
+— no vector service, no external database, no API keys.
+
+## Install (60 seconds)
 
 ```bash
-# PyPI release pending — install from source for now:
-pip install git+https://github.com/yantrikos/yantrik-memory
+pip install yantrik-memory
 yantrik-memory init
 ```
 
-> `pip install yantrik-memory` will work once the first PyPI release ships; this README will drop the source install then.
+```python
+from yantrik_memory import YantrikMemory
+
+mem = YantrikMemory()
+
+context = mem.process_turn(
+    agent_id="assistant",
+    user_id="user123",
+    message="I prefer dark mode and concise answers",
+)
+
+print(context["traits"])         # {'conciseness': 0.55, 'humor': 0.5, ...}
+print(context["bond"]["level"])  # 'acquaintance'
+print(context["memories"])       # what this user told you before
+```
+
+That is the whole integration: one `process_turn` call per user message, and
+the returned dict carries memories, traits, bond state, personality guidance,
+mood and intent. Works with any agent framework — it never sees your LLM.
 
 ## What it does
 
@@ -21,25 +51,6 @@ Gives your AI agent persistent memory that survives across conversations:
 - **Bond Evolution** — Relationships grow from stranger to bonded over time
 - **Knowledge Graph** — Entity relationships for context-aware retrieval
 - **Context Assembly** — One call to get everything an LLM needs
-
-## Quick Start
-
-```python
-from yantrik_memory import YantrikMemory
-
-mem = YantrikMemory()
-
-# Single entry point for agents
-context = mem.process_turn(
-    agent_id="assistant",
-    user_id="user123",
-    message="I prefer dark mode and concise answers",
-)
-
-# Returns: memories, traits, bond state, personality guidance, mood, intent
-print(context["traits"])       # {'conciseness': 0.55, 'humor': 0.5, ...}
-print(context["bond"]["level"])  # 'acquaintance'
-```
 
 ## Real Conversation Demo
 
@@ -136,6 +147,23 @@ pip install -e yantrik-memory
 | KV | Fast lookups |
 
 <60ms latency. Zero config. No external databases.
+
+## Related projects
+
+Part of a portfolio of agent infrastructure built by one person, designed to
+be used together:
+
+- [yantrikdb](https://github.com/yantrikos/yantrikdb) — the cognitive memory
+  engine underneath: Rust core, Python bindings, temporal decay, contradiction
+  detection.
+- [yantrikdb-server](https://github.com/yantrikos/yantrikdb-server) — the same
+  engine as an HTTP service / cluster when several agents share one memory.
+- [yantrikdb-mcp](https://github.com/yantrikos/yantrikdb-mcp) — that memory as
+  an MCP server for Claude Code, Cursor and Windsurf.
+- [langchain-yantrikdb](https://github.com/spranab/langchain-yantrikdb) — the
+  same memory as a LangChain `VectorStore` and `ChatMessageHistory`.
+- [openclaw-memory-yantrikdb](https://github.com/yantrikos/openclaw-memory-yantrikdb)
+  — OpenClaw memory-slot plugin backed by the same engine.
 
 ## License
 

@@ -39,7 +39,8 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yantrikos/yantrik-memory"
+Homepage = "https://yantrikdb.com"
+Source = "https://github.com/yantrikos/yantrik-memory"
 Repository = "https://github.com/yantrikos/yantrik-memory"
 Documentation = "https://github.com/yantrikos/yantrik-memory#readme"
 "Bug Tracker" = "https://github.com/yantrikos/yantrik-memory/issues"
