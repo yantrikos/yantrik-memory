@@ -20,6 +20,17 @@ import yantrikdb
 
 logger = logging.getLogger("yantrik_memory")
 
+# The engine's bundled embedder: the engine fetches it on first use, so it is
+# not a Python dependency of ours. Its dimension is fixed by the model.
+_BUNDLED_MODEL = "potion-base-8M"
+_BUNDLED_DIM = 256
+
+# What stores created before the bundled default was adopted were built with:
+# sentence-transformers' all-MiniLM-L6-v2. A store's dimension is fixed at
+# creation, so those keep using it.
+_LEGACY_MODEL = "all-MiniLM-L6-v2"
+_LEGACY_DIM = 384
+
 # ── Constants ──────────────────────────────────────────────────────────────
 
 VALID_MEMORY_KINDS = frozenset({
@@ -165,10 +176,22 @@ class YantrikMemory:
             "db_path",
             os.environ.get("YANTRIKDB_DB_PATH", "./yantrik_memory.db"),
         )
-        self._db = yantrikdb.YantrikDB(db_path)
+        # The dimension has to be decided BEFORE the store is opened, and it
+        # has to match whatever embedder gets attached. An existing store keeps
+        # the dimension it was created with; a new one is sized for the
+        # embedder we can actually guarantee (see `_init_embedder`).
+        # A zero-byte file is NOT an existing store: callers routinely hand us
+        # a path from tempfile.NamedTemporaryFile, which creates the file
+        # before the engine ever sees it. Size, not existence, is what says
+        # whether there is an index here whose dimension we must respect.
+        existing = os.path.exists(db_path) and os.path.getsize(db_path) > 0
+        dim = self.config.get("embedding_dim")
+        if dim is None:
+            dim = _LEGACY_DIM if existing else _BUNDLED_DIM
+        self._db = yantrikdb.YantrikDB(db_path, dim)
+        self._embedding_dim = dim
 
-        # Set up embedder if sentence-transformers available
-        self._init_embedder()
+        self._init_embedder(existing=existing)
 
         # Encryption (optional)
         self._encryption_key = None
@@ -179,23 +202,43 @@ class YantrikMemory:
 
     # ── Embedder Setup ─────────────────────────────────────────────────
 
-    def _init_embedder(self):
-        """Initialize sentence-transformers embedder for YantrikDB."""
-        try:
-            from sentence_transformers import SentenceTransformer
-            model_name = self.config.get("embedding_model", "all-MiniLM-L6-v2")
-            model = SentenceTransformer(model_name)
-            self._db.set_embedder(model)
-            logger.info("Embedder set: %s", model_name)
-        except ImportError:
-            logger.warning(
-                "sentence-transformers not installed. "
-                "Install with: pip install sentence-transformers"
-            )
-            raise RuntimeError(
-                "YantrikDB requires an embedder. Install sentence-transformers: "
-                "pip install sentence-transformers"
-            )
+    def _init_embedder(self, *, existing: bool = False):
+        """Attach an embedder, preferring one that needs no extra install.
+
+        `pip install yantrik-memory` used to produce something that could not
+        be constructed: the only embedder path was sentence-transformers,
+        which is not a dependency of this package and was not mentioned in the
+        install instructions, so the documented first call raised
+        `RuntimeError: YantrikDB requires an embedder`.
+
+        The engine ships bundled embedders (`set_embedder_named`), so the
+        default path now needs nothing beyond this package. sentence-
+        transformers is still used when the caller asks for one of its models,
+        and for stores created before this change, whose 384-dimensional index
+        the 256-dimensional bundled embedder cannot be attached to.
+        """
+        requested = self.config.get("embedding_model")
+
+        # An explicit request wins, and so does a pre-existing 384-dim store.
+        if requested or (existing and self._embedding_dim == _LEGACY_DIM):
+            model_name = requested or _LEGACY_MODEL
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError as exc:
+                raise RuntimeError(
+                    f"This store needs the sentence-transformers model "
+                    f"{model_name!r} ({self._embedding_dim}-dimensional), which "
+                    f"requires `pip install sentence-transformers`. A NEW store "
+                    f"needs no such install — it uses the engine's bundled "
+                    f"{_BUNDLED_MODEL} embedder."
+                ) from exc
+            self._db.set_embedder(SentenceTransformer(model_name))
+            logger.info("Embedder set: %s (%d-dim)", model_name, self._embedding_dim)
+            return
+
+        # Default: the engine's own embedder. No extra install.
+        self._db.set_embedder_named(_BUNDLED_MODEL)
+        logger.info("Embedder set: %s (%d-dim, bundled)", _BUNDLED_MODEL, _BUNDLED_DIM)
 
     # ── Encryption ─────────────────────────────────────────────────────
 
@@ -356,11 +399,18 @@ class YantrikMemory:
             # YantrikDB.forget() returns bool
             return bool(self._db.forget(rid=memory_id))
 
-    def correct(self, memory_id: str, new_content: str) -> str:
-        """Correct a memory's content. Returns new RID."""
+    def correct(self, memory_id: str, new_content: str,
+                reason: str = "superseded by a later statement") -> str:
+        """Correct a memory's content. Returns new RID.
+
+        `reason` is recorded by the engine, which requires it: a correction
+        without a stated cause is indistinguishable from a silent rewrite when
+        someone later audits why a fact changed.
+        """
         with self._lock:
             # YantrikDB.correct() returns dict with corrected_rid
-            result = self._db.correct(rid=memory_id, new_text=new_content)
+            result = self._db.correct(rid=memory_id, new_text=new_content,
+                                      reason=reason)
         if isinstance(result, dict):
             return result.get("corrected_rid", memory_id)
         return memory_id
@@ -494,7 +544,8 @@ class YantrikMemory:
         # If we have a cached RID, correct directly
         if key in self._traits_rids:
             try:
-                result = self._db.correct(rid=self._traits_rids[key], new_text=json.dumps(traits))
+                result = self._db.correct(rid=self._traits_rids[key], new_text=json.dumps(traits),
+                                          reason="personality traits evolved")
                 if isinstance(result, dict) and "corrected_rid" in result:
                     self._traits_rids[key] = result["corrected_rid"]
                 return
@@ -506,7 +557,8 @@ class YantrikMemory:
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("traits_key") == key:
-                result = self._db.correct(rid=r["rid"], new_text=json.dumps(traits))
+                result = self._db.correct(rid=r["rid"], new_text=json.dumps(traits),
+                                          reason="personality traits evolved")
                 if isinstance(result, dict) and "corrected_rid" in result:
                     self._traits_rids[key] = result["corrected_rid"]
                 return
@@ -658,7 +710,8 @@ class YantrikMemory:
         # Fast path: correct by cached RID
         if bond_key in self._bond_rids:
             try:
-                result = self._db.correct(rid=self._bond_rids[bond_key], new_text=json.dumps(bond_data))
+                result = self._db.correct(rid=self._bond_rids[bond_key], new_text=json.dumps(bond_data),
+                                          reason="bond progression updated")
                 if isinstance(result, dict) and "corrected_rid" in result:
                     self._bond_rids[bond_key] = result["corrected_rid"]
                 return
@@ -670,7 +723,8 @@ class YantrikMemory:
         for r in results:
             meta = r.get("metadata", {}) or {}
             if meta.get("bond_key") == bond_key:
-                result = self._db.correct(rid=r["rid"], new_text=json.dumps(bond_data))
+                result = self._db.correct(rid=r["rid"], new_text=json.dumps(bond_data),
+                                          reason="bond progression updated")
                 if isinstance(result, dict) and "corrected_rid" in result:
                     self._bond_rids[bond_key] = result["corrected_rid"]
                 return

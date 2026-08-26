@@ -19,6 +19,12 @@ context an LLM needs to answer. Storage is a single SQLite file via
 
 ```bash
 pip install yantrik-memory
+
+That is the whole install. Embeddings come from the engine's bundled
+`potion-base-8M` model, which it fetches on first use — no `sentence-transformers`,
+no PyTorch. To use a sentence-transformers model instead, install it yourself and
+pass `{"embedding_model": "all-MiniLM-L6-v2"}`; stores created before v0.1.1 keep
+that model automatically, because their index dimension is fixed at creation.
 yantrik-memory init
 ```
 
