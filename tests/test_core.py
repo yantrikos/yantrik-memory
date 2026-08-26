@@ -10,6 +10,24 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
+def _cleanup(db_path):
+    """Delete a test store, tolerating a platform that will not let us.
+
+    Windows refuses to unlink a file another handle still has open, and the
+    engine's WAL/shm handles are not guaranteed to be released the instant
+    `close()` returns. The store lives under the OS temp directory, so a
+    failed unlink leaks nothing that matters — whereas raising here turns
+    every passing test into a teardown error, which is what it used to do.
+    """
+    for suffix in ("", "-wal", "-shm", "-journal"):
+        path = db_path + suffix
+        if os.path.exists(path):
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+
+
 class TestYantrikMemory(unittest.TestCase):
     """Core memory operations."""
 
@@ -23,8 +41,7 @@ class TestYantrikMemory(unittest.TestCase):
 
     def tearDown(self):
         self.mem.close()
-        if os.path.exists(self.db_path):
-            os.unlink(self.db_path)
+        _cleanup(self.db_path)
 
     def test_remember_and_recall(self):
         rid = self.mem.remember("agent1", "Python is a programming language", memory_kind="fact")
@@ -84,8 +101,7 @@ class TestTraits(unittest.TestCase):
 
     def tearDown(self):
         self.mem.close()
-        if os.path.exists(self.db_path):
-            os.unlink(self.db_path)
+        _cleanup(self.db_path)
 
     def test_default_traits(self):
         traits = self.mem.get_traits("agent1")
@@ -140,8 +156,7 @@ class TestBonds(unittest.TestCase):
 
     def tearDown(self):
         self.mem.close()
-        if os.path.exists(self.db_path):
-            os.unlink(self.db_path)
+        _cleanup(self.db_path)
 
     def test_initial_bond(self):
         bond = self.mem.get_bond("agent1", "user1")
@@ -190,8 +205,7 @@ class TestContext(unittest.TestCase):
 
     def tearDown(self):
         self.mem.close()
-        if os.path.exists(self.db_path):
-            os.unlink(self.db_path)
+        _cleanup(self.db_path)
 
     def test_get_full_context(self):
         self.mem.remember("agent1", "User likes Python", memory_kind="preference", user_id="user1")
@@ -239,8 +253,7 @@ class TestKnowledgeGraph(unittest.TestCase):
 
     def tearDown(self):
         self.mem.close()
-        if os.path.exists(self.db_path):
-            os.unlink(self.db_path)
+        _cleanup(self.db_path)
 
     def test_relate(self):
         self.mem.relate("Alice", "Backend Team", "manages")
