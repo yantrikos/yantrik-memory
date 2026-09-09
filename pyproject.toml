@@ -5,19 +5,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "yantrik-memory"
 version = "0.1.1"
-description = "Persistent cognitive memory for AI agents — powered by YantrikDB"
+description = "Persistent cognitive memory for AI agents on the YantrikDB engine — hybrid recall, 9 evolving personality traits, bond progression, and a knowledge graph."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "Yantrikos"}
+    {name = "Pranab Sarkar", email = "developer@pranab.co.in"}
 ]
 keywords = [
-    "ai", "memory", "cognitive", "yantrikdb", "personality",
-    "bonds", "agent", "context", "knowledge-graph"
+    "agent-memory", "ai-agents", "cognitive-memory", "knowledge-graph",
+    "llm-memory", "memory", "openclaw", "openclaw-plugin",
+    "persistent-memory", "personality", "python", "sqlite", "yantrikdb",
+    "bonds", "context",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
