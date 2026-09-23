@@ -19,14 +19,14 @@ context an LLM needs to answer. Storage is a single SQLite file via
 
 ```bash
 pip install yantrik-memory
+yantrik-memory init   # optional: creates ./yantrik_memory.db and runs a health check
+```
 
 That is the whole install. Embeddings come from the engine's bundled
 `potion-base-8M` model, which it fetches on first use — no `sentence-transformers`,
 no PyTorch. To use a sentence-transformers model instead, install it yourself and
 pass `{"embedding_model": "all-MiniLM-L6-v2"}`; stores created before v0.1.1 keep
 that model automatically, because their index dimension is fixed at creation.
-yantrik-memory init
-```
 
 ```python
 from yantrik_memory import YantrikMemory
@@ -39,8 +39,8 @@ context = mem.process_turn(
     message="I prefer dark mode and concise answers",
 )
 
-print(context["traits"])         # {'conciseness': 0.55, 'humor': 0.5, ...}
-print(context["bond"]["level"])  # 'acquaintance'
+print(context["traits"])         # {'humor': 0.5, ..., 'conciseness': 0.535, ...}
+print(context["bond"]["level"])  # 'stranger' on a user's first turn
 print(context["memories"])       # what this user told you before
 ```
 
