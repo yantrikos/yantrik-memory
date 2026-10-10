@@ -1,6 +1,7 @@
 # Yantrik Memory
 
 [![PyPI](https://img.shields.io/pypi/v/yantrik-memory)](https://pypi.org/project/yantrik-memory/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/yantrik-memory)](https://pypi.org/project/yantrik-memory/)
 [![Python](https://img.shields.io/pypi/pyversions/yantrik-memory)](https://pypi.org/project/yantrik-memory/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -119,8 +120,8 @@ Here's Yantrik Memory running inside [OpenClaw](https://github.com/openclaw/open
 > - Always use PostgreSQL for production, SQLite for local dev
 
 Behind the scenes, Yantrik Memory tracked:
-- **Traits evolved:** `helpfulness: 0.55` (from "really helpful"), `conciseness: 0.55` (from "keeping things simple")
-- **Bond level:** `acquaintance` (score: 0.08 after 4 interactions)
+- **Traits evolved:** `helpfulness: 0.57` (from "really helpful")
+- **Bond level:** `stranger` (score: 0.055 after 4 interactions — `acquaintance` starts at 0.15)
 - **Memories stored:** 5 facts about Alex, preferences, and project context
 - **Knowledge graph:** `Alex → works_at → Startup`, `TaskApp → uses → FastAPI`
 
@@ -164,12 +165,24 @@ be used together:
   detection.
 - [yantrikdb-server](https://github.com/yantrikos/yantrikdb-server) — the same
   engine as an HTTP service / cluster when several agents share one memory.
+- [yantrikdb-client](https://github.com/yantrikos/yantrikdb-client) — typed
+  Python client for that server, over raw HTTP.
 - [yantrikdb-mcp](https://github.com/yantrikos/yantrikdb-mcp) — that memory as
   an MCP server for Claude Code, Cursor and Windsurf.
 - [langchain-yantrikdb](https://github.com/yantrikos/langchain-yantrikdb) — the
   same memory as a LangChain `VectorStore` and `ChatMessageHistory`.
+- [yantrikdb-hermes-plugin](https://github.com/yantrikos/yantrikdb-hermes-plugin)
+  — the same engine as a memory provider for NousResearch/hermes-agent.
 - [openclaw-memory-yantrikdb](https://github.com/yantrikos/openclaw-memory-yantrikdb)
   — OpenClaw memory-slot plugin backed by the same engine.
+
+**Note:** `yantrik-memory` depends on the `yantrikdb` engine package, which
+installs a top-level `yantrikdb` import. If `yantrikdb-client` is installed
+in the same environment, whichever package installs last overwrites the
+other's files under `yantrikdb/` on disk, and the loser breaks (confirmed:
+`yantrik_memory.YantrikMemory()` raises `AttributeError: module 'yantrikdb'
+has no attribute 'YantrikDB'` when `yantrikdb-client` lands on top). Don't
+install both in one environment until this is fixed upstream.
 
 ## License
 
