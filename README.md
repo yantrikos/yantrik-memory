@@ -175,6 +175,27 @@ be used together:
   — the same engine as a memory provider for NousResearch/hermes-agent.
 - [openclaw-memory-yantrikdb](https://github.com/yantrikos/openclaw-memory-yantrikdb)
   — OpenClaw memory-slot plugin backed by the same engine.
+- [saga-mcp](https://github.com/spranab/saga-mcp) — SQLite-backed project/task
+  tracker as an MCP server, for agents that lose the plan between sessions.
+- [brainstorm-mcp](https://github.com/spranab/brainstorm-mcp) — multi-model
+  debate and synthesis as an MCP server, for a second opinion beyond one
+  model's confident answer.
+- [truenas-mcp](https://github.com/spranab/truenas-mcp) — TrueNAS SCALE
+  management as an MCP server, 278 actions behind one hierarchical tool.
+- [mcpier](https://github.com/spranab/mcpier) — self-hosted MCP control plane
+  that keeps API keys off clients.
+- [icantmarket-mcp](https://github.com/spranab/icantmarket-mcp) — MCP client
+  for browsing, asking, and reviewing on the icantmarket marketplace.
+- [swarmcode](https://github.com/spranab/swarmcode) — Redis-backed messaging
+  channel between Claude Code instances on different machines.
+- [discord-mcp](https://github.com/spranab/discord-mcp) — Discord server
+  management as an MCP server, 30+ actions behind one hierarchical tool.
+- [tier](https://github.com/yantrikos/tier) — adapts tool presentation to
+  model size so smaller models pick the right tool more often.
+- [chronicler](https://github.com/yantrikos/chronicler) — self-hosted AI
+  roleplay client with memory that survives long campaigns.
+- [contextcache](https://github.com/spranab/contextcache) — caches compiled
+  tool schemas on disk so repeated tool-heavy requests skip reprocessing them.
 
 **Note:** `yantrik-memory` depends on the `yantrikdb` engine package, which
 installs a top-level `yantrikdb` import. If `yantrikdb-client` is installed
